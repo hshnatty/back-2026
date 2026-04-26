@@ -19,7 +19,7 @@ const storage = firebase.storage(); // not used, but harmless
 
 // ========== CLOUDINARY CONFIG ==========
 const CLOUDINARY_CLOUD_NAME = "dvqwcsgh0";          // Your cloud name
-const CLOUDINARY_UPLOAD_PRESET = "chirp_posts";    // Replace with your unsigned upload preset name
+const CLOUDINARY_UPLOAD_PRESET = "chirp_post";    // correct (singular)
 
 // Admin email (for demo – change as needed)
 const ADMIN_EMAIL = "admin@chirp.com";
