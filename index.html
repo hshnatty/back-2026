@@ -32,11 +32,11 @@
                 <button id="emailSignInBtn" class="btn btn-primary">Sign in with Email</button>
                 <button id="signUpBtn" class="btn btn-outline">Create Account</button>
                 <!-- User dropdown (visible when logged in) -->
-                <button id="editProfilePhotoBtn">🖼️ Change Profile Photo</button>
                 <div id="userMenu" class="user-menu" style="display:none;">
                     <img id="userAvatar" class="user-avatar" src="https://via.placeholder.com/36" alt="User">
                     <div id="userDropdown" class="user-dropdown">
                         <button id="editProfileBtn">✏️ Edit Profile Name</button>
+                        <button id="editProfilePhotoBtn">🖼️ Change Profile Photo</button>
                         <div class="divider"></div>
                         <button id="logoutBtn">🚪 Log Out</button>
                     </div>
@@ -85,7 +85,9 @@
         </div>
     </div>
 
-    <script src="script.js"></script>
+    <!-- Hidden file input for profile photo -->
     <input type="file" id="profilePhotoInput" accept="image/*" style="display:none;">
+
+    <script src="script.js"></script>
 </body>
 </html>
