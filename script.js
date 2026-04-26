@@ -348,3 +348,29 @@ async function deletePost(postId, imageUrl) {
 window.addEventListener("click", (e) => {
     if (e.target === authModal) authModal.classList.remove("active");
 });
+// ========== DARK MODE TOGGLE ==========
+const themeToggle = document.getElementById("themeToggle");
+const body = document.body;
+
+// Check saved preference or system preference
+const savedTheme = localStorage.getItem("theme");
+if (savedTheme === "dark") {
+    body.classList.add("dark-mode");
+    themeToggle.textContent = "☀️";
+} else if (savedTheme === "light") {
+    body.classList.remove("dark-mode");
+    themeToggle.textContent = "🌙";
+} else {
+    // Use system preference
+    if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+        body.classList.add("dark-mode");
+        themeToggle.textContent = "☀️";
+    }
+}
+
+themeToggle.addEventListener("click", () => {
+    body.classList.toggle("dark-mode");
+    const isDark = body.classList.contains("dark-mode");
+    themeToggle.textContent = isDark ? "☀️" : "🌙";
+    localStorage.setItem("theme", isDark ? "dark" : "light");
+});
