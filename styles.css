@@ -207,3 +207,8 @@ body {
 }
 .modal-content input:focus { border-color:var(--primary); box-shadow:0 0 0 3px rgba(29,155,240,0.2); }
 .error-message { color:var(--danger); font-size:0.85rem; margin-top:8px; text-align:center; }
+.navbar {
+    background: rgba(255,255,255,0.85);
+    /* change to variable – add this line: */
+    background: var(--card-bg);
+}
