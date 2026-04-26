@@ -1,27 +1,26 @@
 // ========== FIREBASE CONFIG ==========
 // ⚠️ Replace with your own Firebase project config
 const firebaseConfig = {
-    apiKey: "AIzaSyC4krHHKN_akZKFVBH8gGc_tOXTYdITHrc",
-  authDomain: "back-56362.firebaseapp.com",
-  databaseURL: "https://back-56362-default-rtdb.firebaseio.com",
-  projectId: "back-56362",
-  storageBucket: "back-56362.firebasestorage.app",
-  messagingSenderId: "408356846316",
-  appId: "1:408356846316:web:4a514996715f43b0afc3c9",
-  measurementId: "G-VPTFKR0DFD"
+    apiKey: "AIzaSyDummyKeyReplaceWithYours",
+    authDomain: "your-project.firebaseapp.com",
+    projectId: "your-project-id",
+    storageBucket: "your-project.appspot.com",
+    messagingSenderId: "123456789",
+    appId: "1:123456789:web:abcdef"
 };
 
 // Initialize Firebase
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
-const storage = firebase.storage();
+const storage = firebase.storage(); // not used, but harmless
 
-const IMGBB_API_KEY = "cc72ba01e3b6d759c4de57e14c3952d1";
-
+// ========== CLOUDINARY CONFIG ==========
+const CLOUDINARY_CLOUD_NAME = "dvqwcsgh0";          // Your cloud name
+const CLOUDINARY_UPLOAD_PRESET = "chirp_posts";    // Replace with your unsigned upload preset name
 
 // Admin email (for demo – change as needed)
-const ADMIN_EMAIL = "admin@natty.com";
+const ADMIN_EMAIL = "admin@chirp.com";
 
 // ========== DOM ELEMENTS ==========
 const googleSignInBtn = document.getElementById("googleSignInBtn");
@@ -31,6 +30,8 @@ const userMenu = document.getElementById("userMenu");
 const userAvatar = document.getElementById("userAvatar");
 const userDropdown = document.getElementById("userDropdown");
 const editProfileBtn = document.getElementById("editProfileBtn");
+const editProfilePhotoBtn = document.getElementById("editProfilePhotoBtn");
+const profilePhotoInput = document.getElementById("profilePhotoInput");
 const logoutBtn = document.getElementById("logoutBtn");
 
 const createPostCard = document.getElementById("createPostCard");
@@ -52,15 +53,39 @@ const authSwitchLink = document.getElementById("authSwitchLink");
 const authError = document.getElementById("authError");
 const closeModal = document.querySelector(".close-modal");
 
+const themeToggle = document.getElementById("themeToggle");
+const body = document.body;
+
 let currentUser = null;
 let selectedImageFile = null;
 let isSignUpMode = false;
+
+// ========== DARK MODE ==========
+const savedTheme = localStorage.getItem("theme");
+if (savedTheme === "dark") {
+    body.classList.add("dark-mode");
+    themeToggle.textContent = "☀️";
+} else if (savedTheme === "light") {
+    body.classList.remove("dark-mode");
+    themeToggle.textContent = "🌙";
+} else {
+    if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+        body.classList.add("dark-mode");
+        themeToggle.textContent = "☀️";
+    }
+}
+
+themeToggle.addEventListener("click", () => {
+    body.classList.toggle("dark-mode");
+    const isDark = body.classList.contains("dark-mode");
+    themeToggle.textContent = isDark ? "☀️" : "🌙";
+    localStorage.setItem("theme", isDark ? "dark" : "light");
+});
 
 // ========== AUTH STATE LISTENER ==========
 auth.onAuthStateChanged(user => {
     currentUser = user;
     if (user) {
-        // Show user menu, hide auth buttons
         googleSignInBtn.style.display = "none";
         emailSignInBtn.style.display = "none";
         signUpBtn.style.display = "none";
@@ -126,7 +151,6 @@ authForm.addEventListener("submit", (e) => {
         auth.createUserWithEmailAndPassword(email, password)
         .then(() => {
             authModal.classList.remove("active");
-            // Set default display name from email
             const user = auth.currentUser;
             if (user) {
                 user.updateProfile({ displayName: email.split('@')[0] });
@@ -164,6 +188,40 @@ editProfileBtn.addEventListener("click", () => {
             userDropdown.classList.remove("active");
         }).catch(err => alert(err.message));
     }
+});
+
+// Profile photo change
+editProfilePhotoBtn.addEventListener("click", () => {
+    profilePhotoInput.click();
+    userDropdown.classList.remove("active");
+});
+
+profilePhotoInput.addEventListener("change", async (e) => {
+    const file = e.target.files[0];
+    if (!file || !currentUser) return;
+
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
+
+    try {
+        const response = await fetch(
+            `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
+            { method: "POST", body: formData }
+        );
+        const result = await response.json();
+        if (result.secure_url) {
+            const photoURL = result.secure_url;
+            await currentUser.updateProfile({ photoURL });
+            userAvatar.src = photoURL;
+            alert("Profile photo updated!");
+        } else {
+            throw new Error(result.error?.message || "Upload failed");
+        }
+    } catch (err) {
+        alert("Failed to update photo: " + err.message);
+    }
+    profilePhotoInput.value = "";
 });
 
 logoutBtn.addEventListener("click", () => {
@@ -204,20 +262,20 @@ submitPostBtn.addEventListener("click", async () => {
     let imageUrl = null;
 
     if (selectedImageFile) {
-        // Upload to ImgBB
         const formData = new FormData();
-        formData.append("image", selectedImageFile);
+        formData.append("file", selectedImageFile);
+        formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
 
         try {
-            const response = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
-                method: "POST",
-                body: formData
-            });
+            const response = await fetch(
+                `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
+                { method: "POST", body: formData }
+            );
             const result = await response.json();
-            if (result.success) {
-                imageUrl = result.data.url;   // direct image URL
+            if (result.secure_url) {
+                imageUrl = result.secure_url;
             } else {
-                throw new Error(result.error?.message || "ImgBB upload failed");
+                throw new Error(result.error?.message || "Cloudinary upload failed");
             }
         } catch (err) {
             alert("Image upload failed: " + err.message);
@@ -250,6 +308,7 @@ submitPostBtn.addEventListener("click", async () => {
     submitPostBtn.disabled = false;
     submitPostBtn.textContent = "Chirp";
 });
+
 // ========== LOAD POSTS (REAL-TIME) ==========
 function loadPosts() {
     db.collection("posts")
@@ -271,7 +330,7 @@ function renderPost(post) {
     const time = post.createdAt ? new Date(post.createdAt.seconds * 1000).toLocaleString() : "Just now";
     const isLiked = currentUser && post.likes && post.likes.includes(currentUser.uid);
     const isAdmin = currentUser && currentUser.email === ADMIN_EMAIL;
-    const canDelete = isAdmin || (currentUser && currentUser.uid === post.userId);
+    const canDelete = isAdmin;   // ONLY admin can delete
 
     card.innerHTML = `
         <div class="post-header">
@@ -294,13 +353,11 @@ function renderPost(post) {
         </div>
     `;
 
-    // Like button event
     const likeBtn = card.querySelector(".like-btn");
     if (likeBtn) {
         likeBtn.addEventListener("click", () => toggleLike(post.id));
     }
 
-    // Delete button event
     const delBtn = card.querySelector(".delete-btn");
     if (delBtn) {
         delBtn.addEventListener("click", () => deletePost(post.id, post.imageUrl));
@@ -334,11 +391,12 @@ async function toggleLike(postId) {
     await postRef.update({ likes, likeCount: count });
 }
 
+// ========== DELETE POST (admin only) ==========
 async function deletePost(postId, imageUrl) {
     if (!confirm("Are you sure you want to delete this post?")) return;
     try {
         await db.collection("posts").doc(postId).delete();
-        // No need to delete from ImgBB (free images can stay)
+        // Images are on Cloudinary – they stay unless you delete them from the Cloudinary dashboard
     } catch (err) {
         alert("Delete failed: " + err.message);
     }
@@ -347,30 +405,4 @@ async function deletePost(postId, imageUrl) {
 // Close modal by clicking outside
 window.addEventListener("click", (e) => {
     if (e.target === authModal) authModal.classList.remove("active");
-});
-// ========== DARK MODE TOGGLE ==========
-const themeToggle = document.getElementById("themeToggle");
-const body = document.body;
-
-// Check saved preference or system preference
-const savedTheme = localStorage.getItem("theme");
-if (savedTheme === "dark") {
-    body.classList.add("dark-mode");
-    themeToggle.textContent = "☀️";
-} else if (savedTheme === "light") {
-    body.classList.remove("dark-mode");
-    themeToggle.textContent = "🌙";
-} else {
-    // Use system preference
-    if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
-        body.classList.add("dark-mode");
-        themeToggle.textContent = "☀️";
-    }
-}
-
-themeToggle.addEventListener("click", () => {
-    body.classList.toggle("dark-mode");
-    const isDark = body.classList.contains("dark-mode");
-    themeToggle.textContent = isDark ? "☀️" : "🌙";
-    localStorage.setItem("theme", isDark ? "dark" : "light");
 });
