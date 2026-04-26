@@ -48,23 +48,24 @@
     <!-- MAIN CONTENT -->
     <div class="main-container">
         <!-- Create Post Card (only when logged in) -->
-        <div id="createPostCard" class="create-post-card">
-            <textarea id="postText" placeholder="What's happening?" maxlength="500"></textarea>
-            <div id="imagePreviewContainer" class="image-preview-container" style="display:none;">
-                <img id="imagePreview" src="" alt="Preview">
-                <button id="removeImageBtn" class="image-preview-remove">✕</button>
-            </div>
-            <div class="create-post-actions">
-    <!-- Only visible to admin -->
-    <button id="bulkUploadBtn" class="btn btn-outline btn-sm" style="display:none;" title="Upload multiple photos as separate posts">
-        📸 Bulk Upload
-    </button>
-    <label for="imageUploadInput" class="image-upload-label">
-        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 10.5V19H5V5h8.5l1-1H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-8.5l-1-1V10.5zM14.5 5l3.5 3.5-7.5 7.5L6 15l1-4.5L14.5 5z"/></svg>
-        Add Photo
-    </label>
-    <input type="file" id="imageUploadInput" accept="image/*">
-    <button id="submitPostBtn" class="btn btn-primary">Chirp</button>
+       <div id="createPostCard" class="create-post-card">
+    <textarea id="postText" placeholder="What's happening?" maxlength="500"></textarea>
+    <div id="imagePreviewContainer" class="image-preview-container" style="display:none;">
+        <img id="imagePreview" src="" alt="Preview">
+        <button id="removeImageBtn" class="image-preview-remove">✕</button>
+    </div>
+    <div class="create-post-actions">
+        <button id="bulkUploadBtn" class="btn btn-outline btn-sm" style="display:none;" title="Upload multiple photos as separate posts">
+            📸 Bulk Upload
+        </button>
+        <label for="imageUploadInput" class="image-upload-label">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 10.5V19H5V5h8.5l1-1H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-8.5l-1-1V10.5zM14.5 5l3.5 3.5-7.5 7.5L6 15l1-4.5L14.5 5z"/></svg>
+            Add Photo
+        </label>
+        <input type="file" id="imageUploadInput" accept="image/*">
+        <button id="submitPostBtn" class="btn btn-primary">Chirp</button>
+    </div>
+    <input type="file" id="bulkUploadInput" accept="image/*" multiple style="display:none;">
 </div>
         </div>
 
