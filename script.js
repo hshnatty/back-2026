@@ -1,27 +1,25 @@
 // ========== FIREBASE CONFIG ==========
 // ⚠️ Replace with your own Firebase project config
 const firebaseConfig = {
- apiKey: "AIzaSyC4krHHKN_akZKFVBH8gGc_tOXTYdITHrc",
-  authDomain: "back-56362.firebaseapp.com",
-  databaseURL: "https://back-56362-default-rtdb.firebaseio.com",
-  projectId: "back-56362",
-  storageBucket: "back-56362.firebasestorage.app",
-  messagingSenderId: "408356846316",
-  appId: "1:408356846316:web:4a514996715f43b0afc3c9",
-  measurementId: "G-VPTFKR0DFD"
+    apiKey: "AIzaSyDummyKeyReplaceWithYours",
+    authDomain: "your-project.firebaseapp.com",
+    projectId: "your-project-id",
+    storageBucket: "your-project.appspot.com",
+    messagingSenderId: "123456789",
+    appId: "1:123456789:web:abcdef"
 };
 
 // Initialize Firebase
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
-const storage = firebase.storage(); // not used, but harmless
+const storage = firebase.storage(); // not used, harmless
 
 // ========== CLOUDINARY CONFIG ==========
 const CLOUDINARY_CLOUD_NAME = "dvqwcsgh0";          // Your cloud name
-const CLOUDINARY_UPLOAD_PRESET = "chirp_post";    // correct (singular)
+const CLOUDINARY_UPLOAD_PRESET = "chirp_post";      // Your unsigned preset
 
-// Admin email (for demo – change as needed)
+// Admin email (change to your admin email)
 const ADMIN_EMAIL = "admin@chirp.com";
 
 // ========== DOM ELEMENTS ==========
@@ -43,6 +41,8 @@ const imagePreview = document.getElementById("imagePreview");
 const imagePreviewContainer = document.getElementById("imagePreviewContainer");
 const removeImageBtn = document.getElementById("removeImageBtn");
 const submitPostBtn = document.getElementById("submitPostBtn");
+const bulkUploadBtn = document.getElementById("bulkUploadBtn");
+const bulkUploadInput = document.getElementById("bulkUploadInput");
 const feedGrid = document.getElementById("feedGrid");
 
 const authModal = document.getElementById("authModal");
@@ -94,12 +94,20 @@ auth.onAuthStateChanged(user => {
         userMenu.style.display = "block";
         userAvatar.src = user.photoURL || "https://via.placeholder.com/36";
         createPostCard.classList.add("visible");
+
+        // Show bulk upload button only for admin
+        if (user.email === ADMIN_EMAIL) {
+            bulkUploadBtn.style.display = "inline-block";
+        } else {
+            bulkUploadBtn.style.display = "none";
+        }
     } else {
         googleSignInBtn.style.display = "inline-block";
         emailSignInBtn.style.display = "inline-block";
         signUpBtn.style.display = "inline-block";
         userMenu.style.display = "none";
         createPostCard.classList.remove("visible");
+        bulkUploadBtn.style.display = "none";
     }
     loadPosts();
 });
@@ -166,7 +174,6 @@ authForm.addEventListener("submit", (e) => {
     }
 });
 
-// Google Sign-In
 googleSignInBtn.addEventListener("click", () => {
     const provider = new firebase.auth.GoogleAuthProvider();
     auth.signInWithPopup(provider).catch(error => alert(error.message));
@@ -192,7 +199,6 @@ editProfileBtn.addEventListener("click", () => {
     }
 });
 
-// Profile photo change
 editProfilePhotoBtn.addEventListener("click", () => {
     profilePhotoInput.click();
     userDropdown.classList.remove("active");
@@ -231,7 +237,7 @@ logoutBtn.addEventListener("click", () => {
     userDropdown.classList.remove("active");
 });
 
-// ========== IMAGE HANDLING ==========
+// ========== SINGLE IMAGE HANDLING ==========
 imageUploadInput.addEventListener("change", (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -252,7 +258,7 @@ removeImageBtn.addEventListener("click", () => {
     imageUploadInput.value = "";
 });
 
-// ========== SUBMIT POST ==========
+// ========== SUBMIT SINGLE POST ==========
 submitPostBtn.addEventListener("click", async () => {
     if (!currentUser) return alert("You must be logged in to post.");
     const text = postText.value.trim();
@@ -262,7 +268,6 @@ submitPostBtn.addEventListener("click", async () => {
     submitPostBtn.textContent = "Posting...";
 
     let imageUrl = null;
-
     if (selectedImageFile) {
         const formData = new FormData();
         formData.append("file", selectedImageFile);
@@ -309,6 +314,74 @@ submitPostBtn.addEventListener("click", async () => {
     }
     submitPostBtn.disabled = false;
     submitPostBtn.textContent = "Chirp";
+});
+
+// ========== BULK UPLOAD (ADMIN ONLY) ==========
+bulkUploadBtn.addEventListener("click", () => {
+    bulkUploadInput.click();
+});
+
+bulkUploadInput.addEventListener("change", async () => {
+    const files = bulkUploadInput.files;
+    if (!files.length) return;
+
+    const text = postText.value.trim();  // same caption for all
+    if (!text) {
+        if (!confirm("No caption entered. Continue with empty caption?")) return;
+    }
+
+    // Disable all buttons while uploading
+    submitPostBtn.disabled = true;
+    bulkUploadBtn.disabled = true;
+    submitPostBtn.textContent = `Uploading 0/${files.length}...`;
+    
+    let uploaded = 0;
+    for (const file of files) {
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
+
+        try {
+            const response = await fetch(
+                `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
+                { method: "POST", body: formData }
+            );
+            const result = await response.json();
+            if (result.secure_url) {
+                const postData = {
+                    userId: currentUser.uid,
+                    userName: currentUser.displayName || "Anonymous",
+                    userPhoto: currentUser.photoURL || "",
+                    text: text || "",
+                    imageUrl: result.secure_url,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    likes: [],
+                    likeCount: 0
+                };
+                await db.collection("posts").add(postData);
+                uploaded++;
+                submitPostBtn.textContent = `Uploading ${uploaded}/${files.length}...`;
+            } else {
+                console.error("Skipped file:", file.name, result.error?.message);
+            }
+        } catch (err) {
+            console.error("Upload failed for", file.name, err);
+        }
+    }
+
+    // Reset everything
+    bulkUploadInput.value = "";
+    postText.value = "";
+    submitPostBtn.disabled = false;
+    bulkUploadBtn.disabled = false;
+    submitPostBtn.textContent = "Chirp";
+    alert(`Bulk upload complete! ${uploaded} of ${files.length} photos posted.`);
+    if (uploaded > 0) {
+        // Clean up the single image preview if any
+        selectedImageFile = null;
+        imagePreviewContainer.style.display = "none";
+        imageUploadInput.value = "";
+    }
 });
 
 // ========== LOAD POSTS (REAL-TIME) ==========
@@ -373,7 +446,6 @@ function escapeHtml(text) {
     return text.replace(/[&<>"']/g, m => map[m]);
 }
 
-// ========== LIKE TOGGLE ==========
 async function toggleLike(postId) {
     if (!currentUser) return alert("Please log in to like posts.");
     const postRef = db.collection("posts").doc(postId);
@@ -393,18 +465,15 @@ async function toggleLike(postId) {
     await postRef.update({ likes, likeCount: count });
 }
 
-// ========== DELETE POST (admin only) ==========
 async function deletePost(postId, imageUrl) {
     if (!confirm("Are you sure you want to delete this post?")) return;
     try {
         await db.collection("posts").doc(postId).delete();
-        // Images are on Cloudinary – they stay unless you delete them from the Cloudinary dashboard
     } catch (err) {
         alert("Delete failed: " + err.message);
     }
 }
 
-// Close modal by clicking outside
 window.addEventListener("click", (e) => {
     if (e.target === authModal) authModal.classList.remove("active");
 });
