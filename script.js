@@ -17,6 +17,9 @@ const auth = firebase.auth();
 const db = firebase.firestore();
 const storage = firebase.storage();
 
+const IMGBB_API_KEY = "cc72ba01e3b6d759c4de57e14c3952d1";
+
+
 // Admin email (for demo – change as needed)
 const ADMIN_EMAIL = "admin@chirp.com";
 
@@ -199,11 +202,23 @@ submitPostBtn.addEventListener("click", async () => {
     submitPostBtn.textContent = "Posting...";
 
     let imageUrl = null;
+
     if (selectedImageFile) {
-        const storageRef = storage.ref(`posts/${Date.now()}_${selectedImageFile.name}`);
+        // Upload to ImgBB
+        const formData = new FormData();
+        formData.append("image", selectedImageFile);
+
         try {
-            const snapshot = await storageRef.put(selectedImageFile);
-            imageUrl = await snapshot.ref.getDownloadURL();
+            const response = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
+                method: "POST",
+                body: formData
+            });
+            const result = await response.json();
+            if (result.success) {
+                imageUrl = result.data.url;   // direct image URL
+            } else {
+                throw new Error(result.error?.message || "ImgBB upload failed");
+            }
         } catch (err) {
             alert("Image upload failed: " + err.message);
             submitPostBtn.disabled = false;
@@ -235,7 +250,6 @@ submitPostBtn.addEventListener("click", async () => {
     submitPostBtn.disabled = false;
     submitPostBtn.textContent = "Chirp";
 });
-
 // ========== LOAD POSTS (REAL-TIME) ==========
 function loadPosts() {
     db.collection("posts")
@@ -320,16 +334,11 @@ async function toggleLike(postId) {
     await postRef.update({ likes, likeCount: count });
 }
 
-// ========== DELETE POST ==========
 async function deletePost(postId, imageUrl) {
     if (!confirm("Are you sure you want to delete this post?")) return;
     try {
         await db.collection("posts").doc(postId).delete();
-        // If the post had an image, delete it from Storage
-        if (imageUrl) {
-            const imageRef = storage.refFromURL(imageUrl);
-            imageRef.delete().catch(err => console.log("Image deletion error:", err));
-        }
+        // No need to delete from ImgBB (free images can stay)
     } catch (err) {
         alert("Delete failed: " + err.message);
     }
