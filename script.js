@@ -21,7 +21,7 @@ const IMGBB_API_KEY = "cc72ba01e3b6d759c4de57e14c3952d1";
 
 
 // Admin email (for demo – change as needed)
-const ADMIN_EMAIL = "admin@chirp.com";
+const ADMIN_EMAIL = "admin@natty.com";
 
 // ========== DOM ELEMENTS ==========
 const googleSignInBtn = document.getElementById("googleSignInBtn");
