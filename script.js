@@ -22,7 +22,7 @@ const CLOUDINARY_CLOUD_NAME = "dvqwcsgh0";          // Your cloud name
 const CLOUDINARY_UPLOAD_PRESET = "chirp_post";      // Your unsigned preset
 
 // Admin email (change to your admin email)
-const ADMIN_EMAIL = "admin@chirp.com";
+const ADMIN_EMAIL = "admin@natty.com";
 
 // ========== DOM ELEMENTS ==========
 const googleSignInBtn = document.getElementById("googleSignInBtn");
