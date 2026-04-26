@@ -1,12 +1,14 @@
 // ========== FIREBASE CONFIG ==========
 // ⚠️ Replace with your own Firebase project config
 const firebaseConfig = {
-    apiKey: "AIzaSyDummyKeyReplaceWithYours",
-    authDomain: "your-project.firebaseapp.com",
-    projectId: "your-project-id",
-    storageBucket: "your-project.appspot.com",
-    messagingSenderId: "123456789",
-    appId: "1:123456789:web:abcdef"
+    apiKey: "AIzaSyC4krHHKN_akZKFVBH8gGc_tOXTYdITHrc",
+  authDomain: "back-56362.firebaseapp.com",
+  databaseURL: "https://back-56362-default-rtdb.firebaseio.com",
+  projectId: "back-56362",
+  storageBucket: "back-56362.firebasestorage.app",
+  messagingSenderId: "408356846316",
+  appId: "1:408356846316:web:4a514996715f43b0afc3c9",
+  measurementId: "G-VPTFKR0DFD"
 };
 
 // Initialize Firebase
