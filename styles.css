@@ -486,7 +486,7 @@ body.dark-mode .post-avatar {
 }
 
 .post-image {
-    width: 100%;
+    width: 85%;
     border-radius: var(--radius-sm);
     object-fit: cover;
     max-height: 100%;
